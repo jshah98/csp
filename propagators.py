@@ -92,7 +92,6 @@ def prop_FC(csp, newVar=None):
     '''Do forward checking. That is check constraints with
        only one uninstantiated variable. Remember to keep
        track of all pruned variable,value pairs and return '''
-    #IMPLEMENT
     val = True
     pruned = []
 
@@ -124,7 +123,41 @@ def prop_GAC(csp, newVar=None):
     '''Do GAC propagation. If newVar is None we do initial GAC enforce
        processing all constraints. Otherwise we do GAC enforce with
        constraints containing newVar on GAC Queue'''
-    #IMPLEMENT
+    pruned = []
+
+    # get constraints that need to be checked
+    constraints = []
+    if newVar is None:
+        constraints = csp.get_all_cons()
+    else:
+        constraints = csp.get_cons_with_var(newVar)
+
+    while len(constraints) != 0:
+        # treat constraints as a queue, check until queue empty
+        constraint  = constraints.pop(0)
+
+        # check every var
+        for var in constraint.get_unasgn_vars():
+
+            # check every val available
+            for d in var.cur_domain():
+
+                # update var if does not work
+                if not constraint.has_support(var,d):
+                    var.prune_value(d)
+                    pruned.append((var,d))
+                    # if no values work, return
+                    if var.cur_domain_size() == 0:
+                        return False, pruned
+
+                    # add new constraints that are affected
+                    for c in csp.get_cons_with_var(var):
+                        if c not in constraints:
+                            constraints.append(c)
+    return True, pruned
+
+
+
 
 def ord_mrv(csp):
     ''' return variable according to the Minimum Remaining Values heuristic '''
