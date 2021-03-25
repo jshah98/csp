@@ -1,7 +1,7 @@
 #Look for #IMPLEMENT tags in this file. These tags indicate what has
-#to be implemented to complete problem solution.  
+#to be implemented to complete problem solution.
 
-'''This file will contain different constraint propagators to be used within 
+'''This file will contain different constraint propagators to be used within
    bt_search.
 
    propagator == a function with the following template
@@ -27,22 +27,22 @@
        return is true if we can continue.
 
       The list of variable values pairs are all of the values
-      the propagator pruned (using the variable's prune_value method). 
-      bt_search NEEDS to know this in order to correctly restore these 
+      the propagator pruned (using the variable's prune_value method).
+      bt_search NEEDS to know this in order to correctly restore these
       values when it undoes a variable assignment.
 
-      NOTE propagator SHOULD NOT prune a value that has already been 
+      NOTE propagator SHOULD NOT prune a value that has already been
       pruned! Nor should it prune a value twice
 
       PROPAGATOR called with newly_instantiated_variable = None
       PROCESSING REQUIRED:
-        for plain backtracking (where we only check fully instantiated 
-        constraints) 
+        for plain backtracking (where we only check fully instantiated
+        constraints)
         we do nothing...return true, []
 
         for forward checking (where we only check constraints with one
         remaining variable)
-        we look for unary constraints of the csp (constraints whose scope 
+        we look for unary constraints of the csp (constraints whose scope
         contains only one variable) and we forward_check these constraints.
 
         for gac we establish initial GAC by initializing the GAC queue
@@ -58,11 +58,11 @@
          that have one unassigned variable left
 
          for gac we initialize the GAC queue with all constraints containing V.
-		 
-		 
+
+
 var_ordering == a function with the following template
     var_ordering(csp)
-        ==> returns Variable 
+        ==> returns Variable
 
     csp is a CSP object---the heuristic can use this to get access to the
     variables and constraints of the problem. The assigned variables can be
@@ -73,9 +73,9 @@ var_ordering == a function with the following template
    '''
 
 def prop_BT(csp, newVar=None):
-    '''Do plain backtracking propagation. That is, do no 
+    '''Do plain backtracking propagation. That is, do no
     propagation at all. Just check fully instantiated constraints'''
-    
+
     if not newVar:
         return True, []
     for c in csp.get_cons_with_var(newVar):
@@ -89,13 +89,39 @@ def prop_BT(csp, newVar=None):
     return True, []
 
 def prop_FC(csp, newVar=None):
-    '''Do forward checking. That is check constraints with 
-       only one uninstantiated variable. Remember to keep 
+    '''Do forward checking. That is check constraints with
+       only one uninstantiated variable. Remember to keep
        track of all pruned variable,value pairs and return '''
     #IMPLEMENT
+    val = True
+    pruned = []
+
+    # get constraints that need to be checked
+    constraints = []
+    if newVar is None:
+        constraints = csp.get_all_cons()
+    else:
+        constraints = csp.get_cons_with_var(newVar)
+
+
+    for constraint in constraints:
+        # fc only cares about constraints that have 1 unassigned var
+        if constraint.get_n_unasgn() == 1:
+            var = constraint.get_unasgn_vars()[0]
+
+            # update each val
+            for d in var.cur_domain():
+                if not constraint.has_support(var,d):
+                    var.prune_value(d)
+                    pruned.append((var,d))
+            if var.cur_domain_size() == 0:
+                val = False
+
+    return val, pruned
+
 
 def prop_GAC(csp, newVar=None):
-    '''Do GAC propagation. If newVar is None we do initial GAC enforce 
+    '''Do GAC propagation. If newVar is None we do initial GAC enforce
        processing all constraints. Otherwise we do GAC enforce with
        constraints containing newVar on GAC Queue'''
     #IMPLEMENT
@@ -103,4 +129,3 @@ def prop_GAC(csp, newVar=None):
 def ord_mrv(csp):
     ''' return variable according to the Minimum Remaining Values heuristic '''
     #IMPLEMENT
-	
